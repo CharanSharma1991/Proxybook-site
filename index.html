@@ -1,9 +1,379 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>ProxyBook</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ProxyBook — Réservation en ligne</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', sans-serif; background: #f5f6fa; color: #111; min-height: 100vh; }
+  a { color: #0057FF; }
+
+  .pb-wrap { max-width: 880px; margin: 0 auto; background: #fff; min-height: 100vh; box-shadow: 0 0 0 1px rgba(0,0,0,0.07); }
+
+  .pb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid #eee; }
+  .pb-logo { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; color: #060B18; display: flex; align-items: center; gap: 7px; }
+  .pb-logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #00C8F0; }
+  .pb-badge { font-size: 11px; background: #f0f4ff; color: #0057FF; padding: 3px 10px; border-radius: 20px; border: 1px solid #d0dcff; font-weight: 500; }
+
+  .pb-hero { padding: 24px 24px 20px; border-bottom: 1px solid #eee; }
+  .pb-biz-name { font-size: 22px; font-weight: 600; color: #060B18; margin-bottom: 5px; }
+  .pb-biz-sub { font-size: 13px; color: #666; }
+
+  .pb-steps { display: flex; padding: 0 24px; border-bottom: 1px solid #eee; }
+  .pb-step { font-size: 13px; padding: 12px 18px 12px 0; color: #aaa; display: flex; align-items: center; gap: 7px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: default; }
+  .pb-step.active { color: #111; border-bottom-color: #0057FF; }
+  .pb-step.done { color: #0057FF; }
+  .pb-step-num { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pb-step.done .pb-step-num { background: #0057FF; border-color: #0057FF; color: #fff; font-size: 13px; }
+
+  .pb-body { padding: 28px 24px; }
+  .pb-section-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .svc-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s; background: #fff; }
+  .svc-card:hover { border-color: #0057FF; }
+  .svc-card.selected { border: 2px solid #0057FF; background: #f0f4ff; }
+  .svc-name { font-size: 14px; font-weight: 500; color: #111; margin-bottom: 5px; }
+  .svc-dur { font-size: 12px; color: #888; }
+  .svc-price { font-size: 12px; color: #0057FF; margin-top: 8px; font-weight: 500; }
+
+  .selected-tag { font-size: 13px; color: #0057FF; margin: 10px 0 16px; display: none; }
+  .add-more-btn { font-size: 13px; color: #0057FF; border: 1px dashed #0057FF; border-radius: 8px; padding: 9px 16px; cursor: pointer; display: none; align-items: center; gap: 6px; background: none; font-family: inherit; margin-bottom: 24px; }
+
+  .cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .cal-nav button { border: 1px solid #e5e7eb; background: #fff; color: #333; border-radius: 7px; width: 30px; height: 30px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .cal-nav button:hover { background: #f0f4ff; border-color: #0057FF; }
+  .cal-nav-label { font-size: 14px; font-weight: 500; color: #111; }
+
+  .cal-grid { display: grid; grid-template-columns: 54px repeat(7, 1fr); border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+  .cal-day-header { padding: 10px 4px; text-align: center; border-bottom: 1px solid #e5e7eb; background: #f8f9fb; }
+  .cal-day-name { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; }
+  .cal-day-num { font-size: 15px; font-weight: 500; color: #111; margin-top: 3px; }
+  .cal-day-num.today { background: #0057FF; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 3px auto 0; font-size: 13px; }
+  .cal-time-col { background: #f8f9fb; border-right: 1px solid #e5e7eb; }
+  .cal-time-cell { height: 36px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; color: #aaa; border-bottom: 1px solid #f0f0f0; }
+  .cal-slot-cell { height: 36px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: center; }
+  .slot-btn { font-size: 12px; font-weight: 500; background: #e8f0fe; color: #185FA5; border: none; border-radius: 5px; padding: 4px 9px; cursor: pointer; transition: background 0.12s; }
+  .slot-btn:hover { background: #0057FF; color: #fff; }
+  .slot-btn.selected { background: #0057FF; color: #fff; }
+  .slot-taken { font-size: 11px; color: #ddd; }
+  .slot-selected-tag { font-size: 13px; color: #0057FF; margin-top: 12px; display: none; }
+
+  .pb-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pb-form-group { display: flex; flex-direction: column; gap: 5px; }
+  .pb-form-group.full { grid-column: 1 / -1; }
+  .pb-form-group label { font-size: 12px; color: #666; font-weight: 500; }
+  .pb-form-group input, .pb-form-group textarea { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 13px; font-size: 14px; color: #111; background: #fff; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  .pb-form-group input:focus, .pb-form-group textarea:focus { border-color: #0057FF; }
+  .pb-form-group textarea { resize: none; height: 76px; }
+
+  .summary-box { background: #f8f9fb; border-radius: 10px; padding: 16px; margin-bottom: 22px; border: 1px solid #eee; }
+  .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+  .summary-label { color: #888; }
+  .summary-val { color: #111; font-weight: 500; }
+
+  .pb-btn-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .pb-btn { border-radius: 8px; padding: 11px 24px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .pb-btn-secondary { border: 1px solid #e5e7eb; background: #fff; color: #333; }
+  .pb-btn-secondary:hover { background: #f5f5f5; }
+  .pb-btn-primary { background: #0057FF; color: #fff; border: none; }
+  .pb-btn-primary:hover { background: #0044CC; }
+  .pb-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .confirm-screen { text-align: center; padding: 48px 24px; }
+  .confirm-icon { width: 60px; height: 60px; border-radius: 50%; background: #e8f0fe; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .confirm-title { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+  .confirm-sub { font-size: 14px; color: #666; max-width: 380px; margin: 0 auto 28px; line-height: 1.7; }
+
+  .powered { text-align: center; padding: 18px; font-size: 12px; color: #aaa; border-top: 1px solid #eee; margin-top: 8px; }
+  .powered a { color: #0057FF; text-decoration: none; font-weight: 500; }
+
+  .notif-banner { display: none; background: #e8f0fe; border: 1px solid #b3c9ff; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #0057FF; margin-bottom: 16px; }
+  .notif-banner.error { background: #fff0f0; border-color: #ffb3b3; color: #cc0000; }
+
+  @media (max-width: 600px) {
+    .pb-form { grid-template-columns: 1fr; }
+    .pb-form-group.full { grid-column: 1; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .cal-grid { grid-template-columns: 44px repeat(7, 1fr); }
+    .slot-btn { font-size: 10px; padding: 3px 5px; }
+    .cal-time-cell { font-size: 10px; }
+  }
+</style>
 </head>
 <body>
-  <h1>Coming soon</h1>
+<div class="pb-wrap">
+
+  <div class="pb-topbar">
+    <div class="pb-logo"><div class="pb-logo-dot"></div>ProxyBook</div>
+    <div class="pb-badge">proxybotpro.fr</div>
+  </div>
+
+  <div class="pb-hero">
+    <div class="pb-biz-name">ProxyBot Pro — Solutions IA</div>
+    <div class="pb-biz-sub">Sablé-sur-Sarthe, Sarthe (72) &nbsp;·&nbsp; +33 9 56 37 27 64 &nbsp;·&nbsp; contact@proxybotpro.fr</div>
+  </div>
+
+  <div class="pb-steps" id="steps-bar">
+    <div class="pb-step active" data-step="1"><div class="pb-step-num">1</div> Prestation</div>
+    <div class="pb-step" data-step="2"><div class="pb-step-num">2</div> Date &amp; heure</div>
+    <div class="pb-step" data-step="3"><div class="pb-step-num">3</div> Coordonnées</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="pb-body" id="step1">
+    <div class="pb-section-title">1. Choisissez une prestation</div>
+    <div class="services-grid">
+      <div class="svc-card" data-svc="Démonstration Chatbot IA" data-dur="30 min" data-price="Gratuit">
+        <div class="svc-name">Démonstration Chatbot IA</div>
+        <div class="svc-dur">30 min</div>
+        <div class="svc-price">Gratuit</div>
+      </div>
+      <div class="svc-card" data-svc="Consultation WhatsApp Bot" data-dur="45 min" data-price="Gratuit">
+        <div class="svc-name">Consultation WhatsApp Bot</div>
+        <div class="svc-dur">45 min</div>
+        <div class="svc-price">Gratuit</div>
+      </div>
+      <div class="svc-card" data-svc="Audit Digital Gratuit" data-dur="1 h" data-price="Gratuit">
+        <div class="svc-name">Audit Digital Gratuit</div>
+        <div class="svc-dur">1 h</div>
+        <div class="svc-price">Gratuit</div>
+      </div>
+      <div class="svc-card" data-svc="Installation &amp; Formation" data-dur="2 h" data-price="Sur devis">
+        <div class="svc-name">Installation &amp; Formation</div>
+        <div class="svc-dur">2 h</div>
+        <div class="svc-price">Sur devis</div>
+      </div>
+    </div>
+    <div class="selected-tag" id="selected-tag"></div>
+    <button class="add-more-btn" id="add-more-btn">+ Ajouter une prestation à la suite</button>
+    <div class="pb-btn-row">
+      <button class="pb-btn pb-btn-primary" id="btn1-next" onclick="goStep(2)" disabled>Continuer</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="pb-body" id="step2" style="display:none;">
+    <div class="pb-section-title">2. Choix de la date &amp; heure</div>
+    <div class="cal-nav">
+      <button onclick="shiftWeek(-1)">&#8249;</button>
+      <div class="cal-nav-label" id="cal-range"></div>
+      <button onclick="shiftWeek(1)">&#8250;</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="slot-selected-tag" id="slot-tag"></div>
+    <div class="pb-btn-row">
+      <button class="pb-btn pb-btn-secondary" onclick="goStep(1)">Retour</button>
+      <button class="pb-btn pb-btn-primary" id="btn2-next" onclick="goStep(3)" disabled>Continuer</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="pb-body" id="step3" style="display:none;">
+    <div class="pb-section-title">3. Vos coordonnées</div>
+    <div class="summary-box">
+      <div class="summary-row"><span class="summary-label">Prestation</span><span class="summary-val" id="s-svc"></span></div>
+      <div class="summary-row"><span class="summary-label">Date</span><span class="summary-val" id="s-date"></span></div>
+      <div class="summary-row"><span class="summary-label">Heure</span><span class="summary-val" id="s-time"></span></div>
+    </div>
+    <div class="notif-banner" id="notif-banner"></div>
+    <div class="pb-form">
+      <div class="pb-form-group"><label>Prénom *</label><input type="text" id="f-prenom" placeholder="Jean" /></div>
+      <div class="pb-form-group"><label>Nom *</label><input type="text" id="f-nom" placeholder="Dupont" /></div>
+      <div class="pb-form-group"><label>Email *</label><input type="email" id="f-email" placeholder="jean@email.com" /></div>
+      <div class="pb-form-group"><label>Téléphone</label><input type="tel" id="f-tel" placeholder="+33 6 12 34 56 78" /></div>
+      <div class="pb-form-group full"><label>Message (optionnel)</label><textarea id="f-msg" placeholder="Une question ou précision..."></textarea></div>
+    </div>
+    <div class="pb-btn-row">
+      <button class="pb-btn pb-btn-secondary" onclick="goStep(2)">Retour</button>
+      <button class="pb-btn pb-btn-primary" id="btn-submit" onclick="submitBooking()">Confirmer la réservation</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 CONFIRMATION -->
+  <div class="pb-body" id="step4" style="display:none;">
+    <div class="confirm-screen">
+      <div class="confirm-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="confirm-title">Réservation confirmée !</div>
+      <div class="confirm-sub">Un email de confirmation a été envoyé. L'équipe ProxyBot Pro vous contactera pour finaliser votre rendez-vous.</div>
+      <button class="pb-btn pb-btn-primary" onclick="goStep(1)">Nouvelle réservation</button>
+    </div>
+  </div>
+
+  <div class="powered">Propulsé par <a href="https://proxybotpro.fr" target="_blank">ProxyBook</a> — plateforme de réservation en ligne</div>
+</div>
+
+<script>
+const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS_FR = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+const MONTHS_FULL = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+// IMPORTANT: Replace this URL with your actual Cloudflare Worker URL after deployment
+const WORKER_URL = 'https://proxybook-notify.proxybotpro.workers.dev';
+
+let selectedSvc = null, selectedSlot = null, weekOffset = 0;
+
+const takenSlots = {};
+function markTaken(d,t){ takenSlots[d+'_'+t]=true; }
+[1,3,5].forEach(d=>{ markTaken(d,'09:00'); markTaken(d,'10:30'); markTaken(d,'14:00'); });
+[2,4,6].forEach(d=>{ markTaken(d,'09:30'); markTaken(d,'11:00'); markTaken(d,'15:30'); });
+
+function getWeekDates(offset){
+  const today=new Date();
+  const mon=new Date(today);
+  mon.setDate(today.getDate()-((today.getDay()+6)%7)+offset*7);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+
+function buildCal(){
+  const days=getWeekDates(weekOffset);
+  const today=new Date();
+  const d0=days[0], d6=days[6];
+  document.getElementById('cal-range').textContent=
+    d0.getDate()+' '+MONTHS_FR[d0.getMonth()]+' — '+d6.getDate()+' '+MONTHS_FR[d6.getMonth()];
+
+  const slots=[];
+  for(let h=9;h<=18;h++){ slots.push(h+':00'); if(h<18) slots.push(h+':30'); }
+
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+
+  grid.appendChild(document.createElement('div')).className='cal-day-header';
+  days.forEach((d)=>{
+    const hdr=document.createElement('div');
+    hdr.className='cal-day-header';
+    const isToday=d.toDateString()===today.toDateString();
+    const numEl=isToday
+      ? `<div class="cal-day-num today">${d.getDate()}</div>`
+      : `<div class="cal-day-num">${d.getDate()}</div>`;
+    hdr.innerHTML=`<div class="cal-day-name">${DAYS_FR[d.getDay()]}</div>${numEl}`;
+    grid.appendChild(hdr);
+  });
+
+  slots.forEach(slot=>{
+    const tc=document.createElement('div');
+    tc.className='cal-time-col';
+    const tl=document.createElement('div');
+    tl.className='cal-time-cell';
+    tl.textContent=slot;
+    tc.appendChild(tl);
+    grid.appendChild(tc);
+
+    days.forEach((d,di)=>{
+      const cell=document.createElement('div');
+      cell.className='cal-slot-cell';
+      const isPast=d<today && d.toDateString()!==today.toDateString();
+      const isSunday=d.getDay()===0;
+      const key=(di+1)+'_'+slot;
+
+      if(isPast||isSunday){
+        // empty
+      } else if(takenSlots[key]){
+        cell.innerHTML='<span class="slot-taken">—</span>';
+      } else {
+        const btn=document.createElement('button');
+        btn.className='slot-btn'+(selectedSlot&&selectedSlot.time===slot&&selectedSlot.dayIdx===di?' selected':'');
+        btn.textContent=slot;
+        btn.onclick=()=>selectSlot(d,slot,di,btn);
+        cell.appendChild(btn);
+      }
+      grid.appendChild(cell);
+    });
+  });
+}
+
+function selectSlot(d,time,dayIdx,btn){
+  selectedSlot={ d, time, dayIdx,
+    label:d.getDate()+' '+MONTHS_FULL[d.getMonth()]+' '+d.getFullYear() };
+  document.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const tag=document.getElementById('slot-tag');
+  tag.style.display='block';
+  tag.textContent='Créneau sélectionné : '+selectedSlot.label+' à '+time;
+  const btn2=document.getElementById('btn2-next');
+  btn2.disabled=false;
+}
+
+function shiftWeek(dir){ weekOffset+=dir; buildCal(); }
+
+document.querySelectorAll('.svc-card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    document.querySelectorAll('.svc-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedSvc={ name:card.dataset.svc, dur:card.dataset.dur, price:card.dataset.price };
+    const tag=document.getElementById('selected-tag');
+    tag.style.display='block';
+    tag.textContent='Sélectionné : '+selectedSvc.name+' ('+selectedSvc.dur+')';
+    document.getElementById('add-more-btn').style.display='inline-flex';
+    document.getElementById('btn1-next').disabled=false;
+  });
+});
+
+function goStep(n){
+  [1,2,3,4].forEach(i=>document.getElementById('step'+i).style.display='none');
+  document.getElementById('step'+n).style.display='block';
+  document.querySelectorAll('.pb-step').forEach(s=>{
+    const sn=parseInt(s.dataset.step);
+    s.className='pb-step'+(sn===n?' active':sn<n?' done':'');
+    if(sn<n) s.querySelector('.pb-step-num').innerHTML='&#10003;';
+    else s.querySelector('.pb-step-num').textContent=sn;
+  });
+  if(n===2) buildCal();
+  if(n===3&&selectedSvc&&selectedSlot){
+    document.getElementById('s-svc').textContent=selectedSvc.name;
+    document.getElementById('s-date').textContent=selectedSlot.label;
+    document.getElementById('s-time').textContent=selectedSlot.time;
+  }
+  window.scrollTo(0,0);
+}
+
+async function submitBooking(){
+  const prenom=document.getElementById('f-prenom').value.trim();
+  const nom=document.getElementById('f-nom').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const msg=document.getElementById('f-msg').value.trim();
+
+  if(!prenom||!nom||!email){ showBanner('Merci de remplir les champs obligatoires.','error'); return; }
+
+  const submitBtn=document.getElementById('btn-submit');
+  submitBtn.disabled=true;
+  submitBtn.textContent='Envoi en cours...';
+
+  const payload={
+    prenom, nom, email, tel, msg,
+    service: selectedSvc.name,
+    duree: selectedSvc.dur,
+    date: selectedSlot.label,
+    heure: selectedSlot.time
+  };
+
+  try {
+    const res=await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(res.ok){ goStep(4); }
+    else { throw new Error('Server error'); }
+  } catch(e){
+    showBanner('Erreur lors de l\'envoi. Veuillez réessayer.','error');
+    submitBtn.disabled=false;
+    submitBtn.textContent='Confirmer la réservation';
+  }
+}
+
+function showBanner(msg, type){
+  const b=document.getElementById('notif-banner');
+  b.textContent=msg;
+  b.className='notif-banner'+(type==='error'?' error':'');
+  b.style.display='block';
+  setTimeout(()=>b.style.display='none',5000);
+}
+</script>
 </body>
 </html>
